@@ -1,7 +1,6 @@
 package gobot
 
 import (
-	"errors"
 	"go-telegram/TGmodels"
 	"net/url"
 	"strconv"
@@ -14,17 +13,14 @@ type GetUpdatesParams struct {
 	// etc
 }
 
-func getUpdates(bot *Bot, params GetUpdatesParams) (TelegramResponse[[]TGmodels.Update], error) {
+func getUpdates(bot *Bot, params GetUpdatesParams) ([]TGmodels.Update, error) {
 	queryParams := url.Values{
 		"offset": {strconv.FormatInt(int64(params.Offset), 10)},
 	}
-	var response TelegramResponse[[]TGmodels.Update]
-	err := bot.makeRequest(methodGetUpdates, nil, queryParams, &response)
+	var response []TGmodels.Update
+	err := makeRequest(bot.token, methodGetUpdates, nil, queryParams, &response)
 	if err != nil {
-		return TelegramResponse[[]TGmodels.Update]{}, err
-	}
-	if !response.Ok {
-		return TelegramResponse[[]TGmodels.Update]{}, errors.New(response.Description)
+		return nil, err
 	}
 	return response, nil
 }

@@ -3,11 +3,13 @@ package gobot
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"go-telegram/TGmodels"
 	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 const (
@@ -25,8 +27,8 @@ type IBot interface {
 	RemoveCommandHandler(command string, handlerId string) bool
 
 	// Telegram Methods
-	GetMe() (TelegramResponse[TGmodels.User], error)
-	SendMessage(params SendMessageParams) (TelegramResponse[TGmodels.Message], error)
+	GetMe() (TGmodels.User, error)
+	SendMessage(params SendMessageParams) (TGmodels.Message, error)
 }
 
 type TelegramResponse[T TGmodels.TelegramModel] struct {
@@ -44,10 +46,9 @@ func randString(n int) string {
 	return string(b)
 }
 
-func (bot *Bot) makeRequest(methodName string, body []byte, params url.Values, returnValue any) error {
+func makeRequest[T TGmodels.TelegramModel](token string, methodName string, body []byte, params url.Values, returnValue *T) error {
 	paramsQuery := params.Encode()
-
-	response, err := http.Post(telegramApiUrl+bot.token+methodName+paramsQuery, "application/json", bytes.NewReader(body))
+	response, err := http.Post(telegramApiUrl+token+methodName+paramsQuery, "application/json", bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -55,10 +56,17 @@ func (bot *Bot) makeRequest(methodName string, body []byte, params url.Values, r
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(bodyBytes, &returnValue)
+
+	var js TelegramResponse[T]
+
+	err = json.Unmarshal(bodyBytes, &js)
+
 	if err != nil {
 		return err
 	}
-
+	if !js.Ok {
+		return errors.New(strconv.FormatInt(int64(js.ErrorCode), 10) + ": " + js.Description)
+	}
+	*returnValue = js.Result
 	return nil
 }

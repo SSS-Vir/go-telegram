@@ -2,6 +2,7 @@ package gobot
 
 import (
 	"encoding/json"
+	"fmt"
 	"go-telegram/TGmodels"
 )
 
@@ -14,17 +15,18 @@ type SendMessageParams struct {
 
 const methodSendMessage = "/sendMessage"
 
-func (bot *Bot) SendMessage(params SendMessageParams) (TelegramResponse[TGmodels.Message], error) {
+func (bot *Bot) SendMessage(params SendMessageParams) (TGmodels.Message, error) {
 
 	body, err := json.Marshal(params)
 	if err != nil {
-		return TelegramResponse[TGmodels.Message]{}, err
+		return TGmodels.Message{}, err
 	}
 
-	var message TelegramResponse[TGmodels.Message]
-	err = bot.makeRequest(methodSendMessage, body, nil, &message)
+	var message TGmodels.Message
+	err = makeRequest(bot.token, methodSendMessage, body, nil, &message)
+	fmt.Printf("message: %+v\n", message)
 	if err != nil {
-		return TelegramResponse[TGmodels.Message]{}, err
+		return TGmodels.Message{}, err
 	}
 	return message, nil
 }
