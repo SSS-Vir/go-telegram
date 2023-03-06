@@ -56,6 +56,7 @@ func makeRequest[T TGmodels.TelegramModel](token string, methodName string, body
 	if err != nil {
 		return err
 	}
+	defer response.Body.Close()
 
 	var js TelegramResponse[T]
 
